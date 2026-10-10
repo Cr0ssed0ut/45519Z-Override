@@ -1,23 +1,30 @@
 #include "main.h"
+#include "pros/distance.hpp"
 #include "pros/rotation.hpp"
 
 // left motor group
-pros::MotorGroup left_motor_group({-1,-2}, pros::MotorGears::blue);
+pros::MotorGroup left_motor_group({-12,-7}, pros::MotorGears::blue);
 // right motor group
-pros::MotorGroup right_motor_group({3,4}, pros::MotorGears::blue);
+pros::MotorGroup right_motor_group({8,19}, pros::MotorGears::blue);
 
-pros::MotorGroup lift_motor_group({12,-8}, pros::MotorGears::green);
+pros::MotorGroup lift_motor_group({4,-9}, pros::MotorGears::red);
 
-pros::Motor toggle_motor(10, pros::MotorGears::green);
-pros::Motor claw_motor(7, pros::MotorGears::green);
+pros::Motor toggle_motor(99, pros::MotorGears::green);
+pros::Motor claw_motor(3, pros::MotorGears::green);
 pros::Motor flipper_motor(11, pros::MotorGears::green);
 
 pros::adi::Pneumatics piston('a', false, true);
-pros::Rotation lift_encoder(10);
+pros::Rotation lift_encoder(99);
+
+pros::Distance left_distance(1);
+pros::Distance front_distance(2);
+pros::Distance right_distance(20);
+
+
 
 // drivetrain settings
-lemlib::ExpoDriveCurve throttle_curve(3,10,1.05);
-lemlib::ExpoDriveCurve steer_curve(3,10,1.05);
+lemlib::ExpoDriveCurve throttle_curve(3,10,1.02);
+lemlib::ExpoDriveCurve steer_curve(3,10,1.02);
 
 lemlib::Drivetrain drivetrain(&left_motor_group, // left motor group
                               &right_motor_group, // right motor group
@@ -28,9 +35,9 @@ lemlib::Drivetrain drivetrain(&left_motor_group, // left motor group
 );
 
 // imu
-pros::Imu imu(10);
+pros::Imu imu(17);
 // horizontal tracking wheel encoder
-pros::Rotation horizontal_encoder(20);
+pros::Rotation horizontal_encoder(19);
 // vertical tracking wheel encoder
 pros::adi::Encoder vertical_encoder('C', 'D', true);
 // horizontal tracking wheel
@@ -47,9 +54,9 @@ lemlib::OdomSensors sensors(nullptr, // vertical tracking wheel 1, set to null
 );
 
 // lateral PID controller
-lemlib::ControllerSettings lateral_controller(10, // proportional gain (kP)
+lemlib::ControllerSettings lateral_controller(12, // proportional gain (kP)
                                               0, // integral gain (kI)
-                                              3, // derivative gain (kD)
+                                              35, // derivative gain (kD)
                                               3, // anti windup
                                               1, // small error range, in inches
                                               100, // small error range timeout, in milliseconds
@@ -59,9 +66,9 @@ lemlib::ControllerSettings lateral_controller(10, // proportional gain (kP)
 );
 
 // angular PID controller
-lemlib::ControllerSettings angular_controller(2, // proportional gain (kP)
+lemlib::ControllerSettings angular_controller(4, // proportional gain (kP)
                                               0, // integral gain (kI)
-                                              10, // derivative gain (kD)
+                                              30, // derivative gain (kD)
                                               3, // anti windup
                                               1, // small error range, in degrees
                                               100, // small error range timeout, in milliseconds

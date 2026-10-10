@@ -3,5 +3,6 @@
 #include "pros/motor_group.hpp"
 
 void test_autonomous() {
-    chassis.moveToPoint(0, 5, 100);
+    chassis.setPose(0, 0, 0); // reset robot position to (0, 0) with heading 0 degrees
+    chassis.turnToHeading(-180,1000000);
 }

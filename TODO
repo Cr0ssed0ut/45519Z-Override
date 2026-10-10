@@ -5,3 +5,6 @@ config driver control   | M
     check motor directions                                      | x
 set up PID              | x
 get coordinates for auto| x
+
+NOTE: 
+broken ports: 10
