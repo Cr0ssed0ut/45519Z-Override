@@ -70,10 +70,11 @@ void predict_models(double x_target, double y_target, double theta_target, lemli
 
         double dx = noise_x * dcos(noise_theta) + noise_y * dsin(noise_theta);
         double dy = noise_y * dcos(noise_theta) - noise_x * dsin(noise_theta);
+        double dtheta = noise_theta - particles[i][2];
 
         particles[i][0] += dx; // x
         particles[i][1] += dy; // y
-        particles[i][2] += noise_theta; // theta
+        particles[i][2] += dtheta; // theta
     }
 }
 
