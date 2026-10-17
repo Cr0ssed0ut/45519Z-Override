@@ -9,16 +9,17 @@ pros::MotorGroup right_motor_group({8,19}, pros::MotorGears::blue);
 
 pros::MotorGroup lift_motor_group({4,-9}, pros::MotorGears::red);
 
-pros::Motor toggle_motor(99, pros::MotorGears::green);
+pros::Motor toggle_motor(18, pros::MotorGears::green);
 pros::Motor claw_motor(3, pros::MotorGears::green);
 pros::Motor flipper_motor(11, pros::MotorGears::green);
 
 pros::adi::Pneumatics piston('a', false, true);
-pros::Rotation lift_encoder(99);
+pros::Rotation lift_encoder(16);
 
-pros::Distance left_distance(1);
+pros::Distance left_dist(13);
 pros::Distance front_distance(2);
 pros::Distance right_distance(20);
+pros::Distance back_distance(99);
 
 
 
@@ -66,7 +67,7 @@ lemlib::ControllerSettings lateral_controller(12, // proportional gain (kP)
 );
 
 // angular PID controller
-lemlib::ControllerSettings angular_controller(4, // proportional gain (kP)
+lemlib::ControllerSettings angular_controller(3, // proportional gain (kP)
                                               0, // integral gain (kI)
                                               30, // derivative gain (kD)
                                               3, // anti windup

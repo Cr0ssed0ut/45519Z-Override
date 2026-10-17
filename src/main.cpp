@@ -2,6 +2,7 @@
 #include "lemlib/configs.h"
 #include "pros/motor_group.hpp"
 #include "lemlib/autos.h"
+#include "pros/motors.h"
 
 /**
  * A callback function for LLEMU's center button.
@@ -44,6 +45,10 @@ void initialize() {
     flipper_motor.set_encoder_units(pros::E_MOTOR_ENCODER_DEGREES); // set flipper motor to use degrees for encoder units
     flipper_motor.tare_position(); // reset flipper motor position to 0
 
+    float lat_offset = 5+(21/25.4);
+    chassis.setPose((12.5/2), 72-13, 0); // reset robot position to (0, 0) with heading 0 degrees
+
+
     // print position to brain screen
     pros::Task screen_task([=]() {
         while (true) {
@@ -52,8 +57,8 @@ void initialize() {
 
             pros::lcd::print(0, "X: %f  Y: %f", pose.x, pose.y);
             pros::lcd::print(1, "Theta: %f", pose.theta); // heading
-            pros::lcd::print(2, "Lift Pose (cDeg): %d", lift_encoder.get_position()); // lift position
-            pros::lcd::print(4, "Lift Draw (mA): %d", lift_motor_group.get_current_draw()); // lift current draw
+            pros::lcd::print(2, "Lift Pose (cDeg): %d", lift_encoder.get_position()/100); // lift position
+
 
             // delay to save resources
             pros::delay(50);
@@ -114,6 +119,7 @@ int target_time = 0; //ms
 
 void opcontrol() {
     claw_motor.move_velocity(400);
+    
     // loop forever
     while (true) {
 
@@ -128,7 +134,7 @@ void opcontrol() {
         if (controller.get_digital(pros::E_CONTROLLER_DIGITAL_R1)) {
             lift_motor_group.move_velocity(400);
         } else if (controller.get_digital(pros::E_CONTROLLER_DIGITAL_R2)) {
-            lift_motor_group.move_velocity(-75);
+            lift_motor_group.move_velocity(-85);
         } else {
             lift_motor_group.move_velocity(0);
         }
@@ -142,7 +148,7 @@ void opcontrol() {
             already_pressed = true;
         }
         if (yPressed && !yPressedLast) {
-            claw_motor.move_relative(-80, 100);
+            claw_motor.move_relative(-90, 100);
             claw_motor.set_brake_mode(pros::E_MOTOR_BRAKE_COAST);
         } 
         
@@ -155,6 +161,7 @@ void opcontrol() {
 
         yPressedLast = yPressed;
 
+
         //flip flipper with Right, hold, else return to neutral
         if (controller.get_digital(pros::E_CONTROLLER_DIGITAL_RIGHT)) {
             // put flipper up
@@ -165,6 +172,16 @@ void opcontrol() {
             // return flipper to neutral position
             flipper_motor.move_absolute(0,55);
             flipper_motor.set_brake_mode(pros::E_MOTOR_BRAKE_COAST);
+        }
+
+        if (controller.get_digital(pros::E_CONTROLLER_DIGITAL_L1)) {
+            toggle_motor.move_velocity(400);
+        } else if (controller.get_digital(pros::E_CONTROLLER_DIGITAL_A) && controller.get_digital(pros::E_CONTROLLER_DIGITAL_X)) {
+            toggle_motor.move_relative(-940, 400);
+            toggle_motor.set_brake_mode(pros::E_MOTOR_BRAKE_COAST);
+            pros::delay(300);
+        } else if (!controller.get_digital(pros::E_CONTROLLER_DIGITAL_L1) && !controller.get_digital(pros::E_CONTROLLER_DIGITAL_A) && !controller.get_digital(pros::E_CONTROLLER_DIGITAL_X)) {
+            toggle_motor.move_velocity(0);
         }
 
         // delay to save resources

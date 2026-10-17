@@ -17,9 +17,10 @@ extern pros::Motor flipper_motor;
 extern pros::adi::Pneumatics piston;
 extern pros::Rotation lift_encoder;
 
-extern pros::Distance left_distance;
+extern pros::Distance left_dist;
 extern pros::Distance front_distance;
 extern pros::Distance right_distance;
+extern pros::Distance back_distance;
 
 
 #endif 
