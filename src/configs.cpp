@@ -1,3 +1,4 @@
+#include "lemlib/configs.h"
 #include "main.h"
 #include "pros/distance.hpp"
 #include "pros/rotation.hpp"
@@ -17,9 +18,8 @@ pros::adi::Pneumatics piston('a', false, true);
 pros::Rotation lift_encoder(16);
 
 pros::Distance left_dist(13);
-pros::Distance front_distance(2);
-pros::Distance right_distance(20);
-pros::Distance back_distance(99);
+pros::Distance front_dist(2);
+pros::Distance right_dist(20);
 
 
 
@@ -38,7 +38,7 @@ lemlib::Drivetrain drivetrain(&left_motor_group, // left motor group
 // imu
 pros::Imu imu(17);
 // horizontal tracking wheel encoder
-pros::Rotation horizontal_encoder(19);
+pros::Rotation horizontal_encoder(99);
 // vertical tracking wheel encoder
 pros::adi::Encoder vertical_encoder('C', 'D', true);
 // horizontal tracking wheel

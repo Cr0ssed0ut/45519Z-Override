@@ -139,7 +139,7 @@ void opcontrol() {
             lift_motor_group.move_velocity(0);
         }
 
-        //spin claw inwards with L2
+        //spin claw outwards with Y
         static bool yPressedLast = false;
 
         bool yPressed = controller.get_digital(pros::E_CONTROLLER_DIGITAL_Y);
@@ -175,12 +175,20 @@ void opcontrol() {
         }
 
         if (controller.get_digital(pros::E_CONTROLLER_DIGITAL_L1)) {
+
             toggle_motor.move_velocity(400);
-        } else if (controller.get_digital(pros::E_CONTROLLER_DIGITAL_A) && controller.get_digital(pros::E_CONTROLLER_DIGITAL_X)) {
+
+        } else if (controller.get_digital(pros::E_CONTROLLER_DIGITAL_A) 
+                   && controller.get_digital(pros::E_CONTROLLER_DIGITAL_X)) {
+
             toggle_motor.move_relative(-940, 400);
             toggle_motor.set_brake_mode(pros::E_MOTOR_BRAKE_COAST);
             pros::delay(300);
-        } else if (!controller.get_digital(pros::E_CONTROLLER_DIGITAL_L1) && !controller.get_digital(pros::E_CONTROLLER_DIGITAL_A) && !controller.get_digital(pros::E_CONTROLLER_DIGITAL_X)) {
+            
+        } else if (!controller.get_digital(pros::E_CONTROLLER_DIGITAL_L1) 
+                   && !controller.get_digital(pros::E_CONTROLLER_DIGITAL_A) 
+                   && !controller.get_digital(pros::E_CONTROLLER_DIGITAL_X)) {
+
             toggle_motor.move_velocity(0);
         }
 

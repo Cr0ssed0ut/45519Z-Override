@@ -7,13 +7,14 @@
 #include <cstdlib>
 #include <iostream>
 #include <random>
+#include <algorithm>
 
 const int no_particles = 500; //500 monte carlo particles for localization
 
 const float right_dist_offset = 1;
 const float left_dist_offset = 1;
 const float front_dist_offset = 1;
-const float back_dist_offset = 1;//these const floats are placeholders for now
+//these const floats are placeholders for now
 
 float lat_noise = 0.02f; //multiplier for lateral movement noise.
 float ang_noise = 0.02f; //multiplier for angular movement noise.
@@ -155,29 +156,17 @@ double square(double x) {
 void weight_particles(char sensor) {
     //placeholder
     float offset = 0;
-    float actual_distance = 0;
     int confidence = 0;
-    if (sensor == 'L') {
-        //left distance sensor
-        actual_distance = left_dist.get() / 25.4; //get the actual distance from the sensor
-        confidence = left_dist.get_confidence();
-        offset = left_dist_offset; //offset for the left distance sensor
-    } else if (sensor == 'R') {
-        //right distance sensor
-        actual_distance = right_distance.get() / 25.4; 
-        confidence = right_distance.get_confidence();
-        offset = right_dist_offset; //offset for the right distance sensor
-    } else if (sensor == 'F') {
-        //front distance sensor
-        actual_distance = front_distance.get() / 25.4;
-        confidence = front_distance.get_confidence();
-        offset = front_dist_offset; //offset for the front distance sensor
-    } else if (sensor == 'B') {
-        //back distance sensor
-        actual_distance = back_distance.get() / 25.4;
-        confidence = back_distance.get_confidence();
-        offset = back_dist_offset; //offset for the back distance sensor
-    }
+
+    double distances[3] = {
+        left_dist.get() / 25.4,
+        right_dist.get() / 25.4,
+        front_dist.get() / 25.4
+    };
+
+    std::sort(distances, distances + 3);
+
+    double actual_distance = (distances[0] + distances[1]) / 2.0;
     
     float particle_distance = 0; //placeholder - replace with actual theoretical distance
     double sum_weights = 0;
