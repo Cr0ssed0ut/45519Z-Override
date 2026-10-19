@@ -4,14 +4,15 @@
 ASSET(auto_curve_1_txt)
 
 void lift_until_deg(int theta) {
-    while (lift_encoder.get_position()/100 < theta) {
-        lift_motor_group.move_velocity(300);
-        pros::delay(20);
-    }
-    while (lift_encoder.get_position()/100 > theta) {
-        lift_motor_group.move_velocity(-300);
-        pros::delay(20);
-    }
+    if (lift_encoder.get_position()/100 < theta) {
+        while (lift_encoder.get_position()/100 < theta) {
+            lift_motor_group.move_velocity(300);
+            pros::delay(20);
+        }} else if (lift_encoder.get_position()/100 > theta){
+        while (lift_encoder.get_position()/100 > theta) {
+            lift_motor_group.move_velocity(-300);
+            pros::delay(20);
+        }}
     lift_motor_group.move_velocity(0);
 }
 
@@ -26,14 +27,24 @@ void claw_open() {
     pros::delay(300);
 }
 
+void tune_pid(){
+    chassis.setPose(0,0,0);
+    chassis.moveToPoint(0, 12, 3000);
+}
+
 void test_autonomous() {
+    lift_motor_group.move_velocity(-100);
+    pros::c::delay(200);
+    lift_motor_group.move_velocity(0);
+
     //reset pose, turn toggle, and take the preload
     chassis.setPose(0,0,0);
     toggle_motor.move_relative(1600, 400);
     claw_close();
 
     //follow the preset curve path and lift the lift
-    chassis.follow(auto_curve_1_txt, 5, 3000);
+    chassis.swingToPoint(11.52, 16, DriveSide::RIGHT,2000);
+    chassis.moveToPose(11.52, 16,90, 2000);
     lift_until_deg(6);
     chassis.waitUntilDone();
 

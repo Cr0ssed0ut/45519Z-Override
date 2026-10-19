@@ -96,7 +96,7 @@ void competition_initialize() {}
  * from where it left off.
  */
 void autonomous() {
-    test_autonomous();
+    // PID tuning is not configured here; leave autonomous idle until a routine is selected.
 }
 
 /**
@@ -184,7 +184,7 @@ void opcontrol() {
             toggle_motor.move_relative(-940, 400);
             toggle_motor.set_brake_mode(pros::E_MOTOR_BRAKE_COAST);
             pros::delay(300);
-            
+
         } else if (!controller.get_digital(pros::E_CONTROLLER_DIGITAL_L1) 
                    && !controller.get_digital(pros::E_CONTROLLER_DIGITAL_A) 
                    && !controller.get_digital(pros::E_CONTROLLER_DIGITAL_X)) {

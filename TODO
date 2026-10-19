@@ -3,7 +3,7 @@ config driver control   | M
     Right to flip flipper -> return to neutral when released    | v
     L2 to spin claw motor inwards                               | v
     check motor directions                                      | x
-set up PID              | x
+retune PID              | x
 get coordinates for auto| x
 
 NOTE: 
