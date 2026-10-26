@@ -1,11 +1,8 @@
 #include "main.h"
 #include "lemlib/configs.h"
-#include "pros/motor_group.hpp"
 #include "lemlib/autos.h"
 #include <cmath>
-#include <vector>
 #include <cstdlib>
-#include <iostream>
 #include <random>
 #include <algorithm>
 
@@ -14,6 +11,7 @@ const int no_particles = 500; //500 monte carlo particles for localization
 const float right_dist_offset = 1;
 const float left_dist_offset = 1;
 const float front_dist_offset = 1;
+const float back_dist_offset = 1;
 //these const floats are placeholders for now
 
 float lat_noise = 0.02f; //multiplier for lateral movement noise.
@@ -70,8 +68,8 @@ double agaussian(float dtheta) {
 //call when initializing or resetting position and pass in pose=(0,0,0)
 //set initial particles to be around the initial pose with some noise. 
 //arbitrary dx=1 and dy=1 for initial noise.
-void set_particles(lemlib::Pose pose) {
-    for (int i = 0; i < no_particles; i++) {
+void set_particles(lemlib::Pose pose, int n = no_particles) {
+    for (int i = 0; i < n; i++) {
         particles[i][0] = pose.x + gaussian(1,1); // x
         particles[i][1] = pose.y + gaussian(1,1); // y
         particles[i][2] = pose.theta + gaussian(1,1); // theta
@@ -152,77 +150,119 @@ double square(double x) {
     return x * x;
 }
 
-//input the appropriate distance sensor (likely the one facing the wall)
-void weight_particles(char sensor) {
-    //placeholder
-    float offset = 0;
-    int confidence = 0;
+static float stdev = 15/25.4;
 
-    double distances[3] = {
-        left_dist.get() / 25.4,
-        right_dist.get() / 25.4,
-        front_dist.get() / 25.4
-    };
-
-    std::sort(distances, distances + 3);
-
-    double actual_distance = (distances[0] + distances[1]) / 2.0;
-    
-    float particle_distance = 0; //placeholder - replace with actual theoretical distance
-    double sum_weights = 0;
-    
-
-    for (int i = 0; i < no_particles; i++) {
-        float theta = 90 - particles[i][2];
-        double y=particles[i][1];
-
-        particle_distance = y * dsec(theta) - offset; 
-        //see notebook for math proving y * secx + o
-
-        //weight based on gaussian likelihood formula
-        float stdev = 0;
-        if (actual_distance * 25.4 < 200) {
-            stdev = 15 / 25.4;
-        } else {
-            stdev = 0.05 * actual_distance;
-        }
-
-        float weight = std::exp(-square((particle_distance - actual_distance)) 
-                                / (2 * square(stdev)));
-        particles[i][3] = weight;
-    }
-
-    sum_weights = 0;
-    for (int i = 0; i < no_particles; i++) {
-        sum_weights += particles[i][3];
-    }
-
-    for (int i = 0; i < no_particles; i++) {
-        particles[i][3] /= sum_weights;
-    }
-
+// Distance from (x,y) along heading 'deg' (0 = +Y, clockwise +) to the 144x144 field walls (±72)
+double ray_to_wall(double x, double y, double deg) {
+    double ux = dsin(deg), uy = dcos(deg);
+    double t = 1e9;
+    if (ux >  1e-6) t = std::min(t, ( 72 - x) / ux);
+    if (ux < -1e-6) t = std::min(t, (-72 - x) / ux);
+    if (uy >  1e-6) t = std::min(t, ( 72 - y) / uy);
+    if (uy < -1e-6) t = std::min(t, (-72 - y) / uy);
+    return t;
 }
 
-void MCLinitialize() {
-    chassis.setPose(0, 0, 0); // reset robot position to (0, 0) with heading 0 degrees
+void weight_particles() {
+    // order: front, right, back, left -> heading offsets 0, 90, 180, 270
+    const double offsets[4] = {0, 90, 180, 270};
+    const double sensor_off[4] = {front_dist_offset, right_dist_offset, back_dist_offset,left_dist_offset}; // inches from center
+    double meas[4] = {
+        front_dist.get() / 25.4, right_dist.get() / 25.4,
+        back_dist.get()  / 25.4, left_dist.get()  / 25.4
+    };
+    bool valid[4];
+    for (int j = 0; j < 4; j++) valid[j] = (meas[j] > 0 && meas[j] < 72);
+
+    double sum = 0;
+    for (int i = 0; i < no_particles; i++) {
+        double x = particles[i][0], y = particles[i][1], th = particles[i][2];
+        double w = particles[i][3];
+        for (int j = 0; j < 4; j++) {
+            if (!valid[j]) continue;
+            double expected = ray_to_wall(x, y, th + offsets[j]) - sensor_off[j];
+            double err = expected - meas[j];
+            w *= std::exp(-err * err / (2 * stdev * stdev));
+        }
+        particles[i][3] = w;
+        sum += w;
+    }
+
+    if (sum < 1e-12) {                       // filter lost track: reset to uniform
+        for (int i = 0; i < no_particles; i++) particles[i][3] = 1.0f / no_particles;
+        return;
+    }
+    for (int i = 0; i < no_particles; i++) particles[i][3] /= sum;
+}
+
+void resample() {
+    // Temporary storage for the new particle set (static keeps it off the stack)
+    static float new_particles[no_particles][4];
+
+    const double spacing = 1.0 / no_particles;   // gap between sample points on the "weight line"
+
+    // Pick one random starting point within the first gap.
+    // All other sample points are evenly spaced from it.
+    std::uniform_real_distribution<double> start_dist(0.0, spacing);
+    double start_offset = start_dist(gen);
+
+    // Walk along the cumulative weights of the old particles
+    double cumulative_weight = particles[0][3];
+    int source_index = 0;                         // which old particle we're currently on
+
+    for (int new_index = 0; new_index < no_particles; new_index++) {
+        double sample_point = start_offset + new_index * spacing;
+
+        // Advance to the old particle whose weight "covers" this sample point
+        while (sample_point > cumulative_weight && source_index < no_particles - 1) {
+            source_index++;
+            cumulative_weight += particles[source_index][3];
+        }
+
+        // Copy that old particle into the new set, with equal weight
+        new_particles[new_index][0] = particles[source_index][0];  // x
+        new_particles[new_index][1] = particles[source_index][1];  // y
+        new_particles[new_index][2] = particles[source_index][2];  // theta
+        new_particles[new_index][3] = spacing;                     // weight
+    }
+
+    memcpy(particles, new_particles, sizeof(particles));
+}
+
+lemlib::Pose estimate() {
+    double x = 0, y = 0, s = 0, c = 0;
+    for (int i = 0; i < no_particles; i++) {
+        double w = particles[i][3];
+        x += w * particles[i][0];
+        y += w * particles[i][1];
+        s += w * dsin(particles[i][2]);
+        c += w * dcos(particles[i][2]);
+    }
+    return lemlib::Pose(x, y, atan2(s, c) * 180.0 / M_PI);
+}
+
+void MCLinitialize(float x, float y, float z) {
+    chassis.setPose(x,y,z); 
     set_particles(chassis.getPose());
 }
 
-void MCLMoveToPose(double x, double y, double theta, int timeout, auto sensor) {
+void MCLMoveToPose(double x, double y, double theta, int timeout) {
     chassis.moveToPose(x, y, theta, 
         timeout,lemlib::MoveToPoseParams{}, 
         true); 
 
+    pros::delay(10);
     auto last_pose = chassis.getPose();
     while (chassis.isInMotion()) {
-        // wait for the robot to reach the target point
-        auto current_pose = chassis.getPose();
-        predict_models(current_pose, last_pose);
-
-        weight_particles(sensor);
-
+        auto cur = chassis.getPose();
+        predict_models(cur, last_pose);
+        weight_particles();
+           double s2 = 0;
+        for (int i = 0; i < no_particles; i++) s2 += particles[i][3] * particles[i][3];
+        if (1.0 / s2 < no_particles / 2.0) resample();
+        last_pose = cur;
         pros::delay(20);
-        last_pose = current_pose;
     }
+    chassis.setPose(estimate());
 }
 

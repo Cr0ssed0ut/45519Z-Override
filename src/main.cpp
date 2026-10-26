@@ -55,9 +55,9 @@ void initialize() {
             // print robot location to the brain screen
             auto pose = chassis.getPose();
 
-            pros::lcd::print(0, "X: %f  Y: %f", pose.x, pose.y);
-            pros::lcd::print(1, "Theta: %f", pose.theta); // heading
-            pros::lcd::print(2, "Lift Pose (cDeg): %d", lift_encoder.get_position()/100); // lift position
+            pros::lcd::print(0, "X: %2f  Y: %2f", pose.x, pose.y);
+            pros::lcd::print(1, "Theta: %2f", pose.theta); // heading
+            pros::lcd::print(2, "Lift Pose (cDeg): %2d", lift_encoder.get_position()/100); // lift position
 
 
             // delay to save resources
@@ -96,7 +96,7 @@ void competition_initialize() {}
  * from where it left off.
  */
 void autonomous() {
-    // PID tuning is not configured here; leave autonomous idle until a routine is selected.
+    match_autonomous();
 }
 
 /**
@@ -116,6 +116,7 @@ pros::Controller controller(pros::E_CONTROLLER_MASTER);
 int time_elapsed = 0;
 bool already_pressed = false;
 int target_time = 0; //ms
+bool claw_toggled = false;
 
 void opcontrol() {
     claw_motor.move_velocity(400);
@@ -138,28 +139,6 @@ void opcontrol() {
         } else {
             lift_motor_group.move_velocity(0);
         }
-
-        //spin claw outwards with Y
-        static bool yPressedLast = false;
-
-        bool yPressed = controller.get_digital(pros::E_CONTROLLER_DIGITAL_Y);
-        if (yPressed && !already_pressed) {
-            target_time = 400;
-            already_pressed = true;
-        }
-        if (yPressed && !yPressedLast) {
-            claw_motor.move_relative(-90, 100);
-            claw_motor.set_brake_mode(pros::E_MOTOR_BRAKE_COAST);
-        } 
-        
-        if (time_elapsed >= target_time && !yPressed) {
-            claw_motor.move_velocity(400);
-            time_elapsed = 0;
-            target_time = 0;
-            already_pressed = false;
-        }
-
-        yPressedLast = yPressed;
 
 
         //flip flipper with Right, hold, else return to neutral
@@ -192,9 +171,48 @@ void opcontrol() {
             toggle_motor.move_velocity(0);
         }
 
+        
+        //spin claw outwards with Y
+        static bool yPressedLast = false;
+        static bool clawPaused = false;
+
+        bool yPressed =
+            controller.get_digital(pros::E_CONTROLLER_DIGITAL_Y);
+
+
+        // L2: toggle pause/resume on the button's rising edge
+        if (controller.get_digital_new_press(pros::E_CONTROLLER_DIGITAL_L2)) {
+            clawPaused = !clawPaused;
+            if (clawPaused) {
+                claw_motor.move_velocity(0);
+            }
+        }
+
+        if (yPressed && !already_pressed) {
+            target_time = 400;
+            already_pressed = true;
+        }
+        if (yPressed && !yPressedLast) {
+            claw_motor.move_relative(-90, 100);
+            claw_motor.set_brake_mode(pros::E_MOTOR_BRAKE_COAST);
+        } 
+        
+        if (time_elapsed >= target_time) {
+            if (clawPaused){
+                claw_motor.move_velocity(0);
+            } else {
+                claw_motor.move_velocity(400);
+            }
+            time_elapsed = 0;
+            target_time = 0;
+            already_pressed = false;
+        }
+        yPressedLast = yPressed;
+        time_elapsed += 50;
+
         // delay to save resources
         pros::delay(50);
-        time_elapsed += 50;
+        
     }
 }
 
