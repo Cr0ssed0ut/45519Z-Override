@@ -37,12 +37,8 @@ void claw_close() {
 
 void claw_open() {
     claw_motor.move_velocity(-400);
-    pros::delay(700);
+    pros::delay(500);
     claw_motor.move_velocity(0);
-}
-
-void tune_pid(){
-    claw_open();
 }
 
 void match_autonomous() {
@@ -55,54 +51,82 @@ void match_autonomous() {
     //reset pose, turn toggle, and take the preload
     chassis.setPose(0,0,0);
     toggle_motor.move_relative(1800, 400);
-    claw_close();
-    pros::delay(200);
+    pros::delay(500);
 
     //follow the preset curve path and lift the lift
     chassis.moveToPose(20.667, 13.667,90, 1600, {.minSpeed=65});
     lift_until_deg(3, 500);
     chassis.waitUntilDone();
-    lift_until_deg(1, 700, 80);
-    pros::delay(200);
+    lift_until_deg(2, 300);
     claw_open();
 
-    auto pose = chassis.getPose();
-
-    chassis.setPose(-2.81,0,pose.theta);
+    //set pose origin to (0-offset,0,90)
+    chassis.setPose(-2.81,0,90);
 
     chassis.moveToPoint(-10,0,500, {.forwards=false});
-    lift_until_deg(-2, 700, 80);
-    chassis.turnToPoint(0, 24+2.81, 700);
+    lift_until_deg(-2, 400, 80);
+    claw_open();
+    claw_motor.move_velocity(400);
+    chassis.turnToPoint(0, 23, 1000);
     chassis.waitUntilDone();
 
-    chassis.moveToPoint(0, 24+2.81, 800, {.minSpeed=80});
+    chassis.moveToPoint(0,23, 1000, {.maxSpeed=60});
     chassis.waitUntilDone();
     claw_close();
+    claw_motor.move_velocity(0);
+
+    lift_until_deg(13, 700);
+    chassis.turnToHeading(45, 700);
+    chassis.waitUntilDone();
+    chassis.setPose(0,24,0);
+    chassis.moveToPose(0,2.81,180,1600, {.minSpeed=60});
+    chassis.waitUntilDone();
+    lift_until_deg(8, 800);
+    chassis.setPose(0,2.81,180);
+    claw_open();
+
     
 
-    chassis.turnToPoint(0, 0, 700);
-    lift_until_deg(15, 1000);
+    chassis.moveToPoint(0,10,800, {.forwards=false});
+    lift_until_deg(-2, 1000, 80);
     chassis.waitUntilDone();
-    chassis.moveToPose(0,0,180,1200);
-    lift_until_deg(8, 500);
-    claw_open();
-
-    pose = chassis.getPose();
-    chassis.setPose(0,2.81,pose.theta);
-
-    chassis.moveToPoint(0,10,500, {.forwards=false});
-    lift_until_deg(-2, 700, 80);
-    chassis.turnToPoint(24+2.81, 0, 700);
+    chassis.turnToHeading(135, 700, {.direction=lemlib::AngularDirection::CCW_COUNTERCLOCKWISE});
     chassis.waitUntilDone();
+    chassis.setPose(0,12.67,135);
 
-    chassis.moveToPoint(24+2.81, 0, 700);
+    chassis.moveToPoint(18, 0, 1000, {.minSpeed=40});
+    chassis.moveToPoint(18, 0, 400, {.maxSpeed=40});
     chassis.waitUntilDone();
     claw_close();
 
-    chassis.turnToPoint(0, 0, 700);
-    lift_until_deg(35, 1000);
+    chassis.setPose(24,0,0);
+    lift_until_deg(15, 1000);
+    chassis.moveToPoint(0, 0, 800);
     chassis.waitUntilDone();
-    chassis.moveToPose(0,0,180,1200);
-    lift_until_deg(25, 500);
+    lift_until_deg(8, 1000);
     claw_open();
-}
+ }
+
+ void tune_pid() {
+    chassis.setPose(0,0,0);
+    lift_motor_group.move_velocity(-100);
+    pros::c::delay(400);
+    lift_encoder.set_position(0);
+    lift_motor_group.move_velocity(0);
+    chassis.setPose(0,0,0);
+    chassis.moveToPoint(0, 24, 2000);
+    chassis.waitUntilDone();
+    chassis.turnToHeading(90, 1000);
+    chassis.waitUntilDone();
+    chassis.turnToHeading(270, 2000);
+    chassis.waitUntilDone();
+    chassis.turnToHeading(0, 2000);
+    chassis.waitUntilDone();
+    chassis.turnToHeading(180, 2000);
+    chassis.waitUntilDone();
+    chassis.setPose(0,24,180);
+    chassis.moveToPoint(0, 0, 2000);
+    chassis.waitUntilDone();
+    chassis.turnToHeading(0, 2000);
+    chassis.waitUntilDone();
+ }

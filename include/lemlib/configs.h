@@ -16,6 +16,7 @@ extern pros::Motor toggle_motor;
 extern pros::Motor flipper_motor;
 extern pros::adi::Pneumatics piston;
 extern pros::Rotation lift_encoder;
+extern pros::Motor intake_motor;
 
 extern pros::Distance left_dist;
 extern pros::Distance front_dist;

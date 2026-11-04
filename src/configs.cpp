@@ -13,6 +13,7 @@ pros::MotorGroup lift_motor_group({4,-9}, pros::MotorGears::red);
 pros::Motor toggle_motor(18, pros::MotorGears::green);
 pros::Motor claw_motor(3, pros::MotorGears::green);
 pros::Motor flipper_motor(11, pros::MotorGears::green);
+pros::Motor intake_motor(15, pros::MotorGears::green);
 
 pros::adi::Pneumatics piston('a', false, true);
 pros::Rotation lift_encoder(16);
@@ -56,9 +57,9 @@ lemlib::OdomSensors sensors(nullptr, // vertical tracking wheel 1, set to null
 );
 
 // lateral PID controller
-lemlib::ControllerSettings lateral_controller(16, // proportional gain (kP)
+lemlib::ControllerSettings lateral_controller(15, // proportional gain (kP)
                                               0, // integral gain (kI)
-                                              8, // derivative gain (kD)
+                                              3, // derivative gain (kD)
                                               3, // anti windup
                                               1, // small error range, in inches
                                               100, // small error range timeout, in milliseconds
@@ -68,9 +69,9 @@ lemlib::ControllerSettings lateral_controller(16, // proportional gain (kP)
 );
 
 // angular PID controller
-lemlib::ControllerSettings angular_controller(2.5, // proportional gain (kP)
+lemlib::ControllerSettings angular_controller(2.1, // proportional gain (kP)
                                               0, // integral gain (kI)
-                                              10, // derivative gain (kD)
+                                              7.5, // derivative gain (kD)
                                               3, // anti windup
                                               1, // small error range, in degrees
                                               100, // small error range timeout, in milliseconds

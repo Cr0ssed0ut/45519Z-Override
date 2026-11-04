@@ -34,6 +34,7 @@ void initialize() {
     lift_encoder.reset_position(); // reset lift encoder position to 0
 
     toggle_motor.set_brake_mode(pros::E_MOTOR_BRAKE_HOLD); // set toggle motor to hold position when not moving
+    lift_encoder.set_position(0);
     
     lift_motor_group.set_brake_mode(pros::E_MOTOR_BRAKE_HOLD); // set lift motors to hold position when not moving
     lift_motor_group.set_encoder_units(pros::E_MOTOR_ENCODER_DEGREES); // set lift motors to use degrees for encoder units
@@ -116,7 +117,8 @@ pros::Controller controller(pros::E_CONTROLLER_MASTER);
 int time_elapsed = 0;
 bool already_pressed = false;
 int target_time = 0; //ms
-bool claw_toggled = false;
+bool claw_open = false;
+
 
 void opcontrol() {
     claw_motor.move_velocity(400);
@@ -173,46 +175,42 @@ void opcontrol() {
 
         
         //spin claw outwards with Y
-        static bool yPressedLast = false;
         static bool clawPaused = false;
+        
 
-        bool yPressed =
-            controller.get_digital(pros::E_CONTROLLER_DIGITAL_Y);
-
+        if (controller.get_digital(pros::E_CONTROLLER_DIGITAL_Y)) {
+            claw_motor.move_velocity(-400);
+        } else if (!clawPaused){
+            claw_motor.move_velocity(400);
+        }
 
         // L2: toggle pause/resume on the button's rising edge
         if (controller.get_digital_new_press(pros::E_CONTROLLER_DIGITAL_L2)) {
             clawPaused = !clawPaused;
-            if (clawPaused) {
-                claw_motor.move_velocity(0);
-            }
-        }
-
-        if (yPressed && !already_pressed) {
-            target_time = 400;
-            already_pressed = true;
-        }
-        if (yPressed && !yPressedLast) {
-            claw_motor.move_relative(-90, 100);
-            claw_motor.set_brake_mode(pros::E_MOTOR_BRAKE_COAST);
-        } 
-        
-        if (time_elapsed >= target_time) {
-            if (clawPaused){
+            if (clawPaused && !claw_open) {
                 claw_motor.move_velocity(0);
             } else {
                 claw_motor.move_velocity(400);
             }
-            time_elapsed = 0;
-            target_time = 0;
-            already_pressed = false;
         }
-        yPressedLast = yPressed;
         time_elapsed += 50;
+
+        if (controller.get_digital(pros::E_CONTROLLER_DIGITAL_L1)) {
+            intake_motor.move_velocity(-400);
+        } else if (controller.get_digital(pros::E_CONTROLLER_DIGITAL_LEFT)) {
+            intake_motor.move_velocity(400);
+        } else {
+            intake_motor.move_velocity(0);
+        }
 
         // delay to save resources
         pros::delay(50);
         
+        if (claw_open && controller.get_digital_new_press(pros::E_CONTROLLER_DIGITAL_RIGHT) || controller.get_digital_new_press(pros::E_CONTROLLER_DIGITAL_Y)) {
+            claw_open = !claw_open;
+        } else if (!claw_open && controller.get_digital_new_press(pros::E_CONTROLLER_DIGITAL_RIGHT) || controller.get_digital_new_press(pros::E_CONTROLLER_DIGITAL_Y)) {
+            claw_open = !claw_open;
+        }
     }
 }
 
