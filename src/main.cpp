@@ -46,9 +46,6 @@ void initialize() {
     flipper_motor.set_encoder_units(pros::E_MOTOR_ENCODER_DEGREES); // set flipper motor to use degrees for encoder units
     flipper_motor.tare_position(); // reset flipper motor position to 0
 
-    float lat_offset = 5+(21/25.4);
-    chassis.setPose((12.5/2), 72-13, 0); // reset robot position to (0, 0) with heading 0 degrees
-
 
     // print position to brain screen
     pros::Task screen_task([=]() {
