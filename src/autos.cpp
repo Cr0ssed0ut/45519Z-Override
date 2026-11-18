@@ -74,7 +74,6 @@ void match_autonomous() {
 
     chassis.moveToPoint(0, 24, 1500, {.maxSpeed=60});
     chassis.waitUntilDone();
-    chassis.setPose(0,24,chassis.getPose().theta);
     claw_close();
     claw_motor.move_velocity(0);
 
@@ -96,7 +95,6 @@ void match_autonomous() {
 
     chassis.moveToPoint(24, 0, 1000, {.minSpeed=60});
     chassis.waitUntilDone();
-    chassis.setPose(24,0,chassis.getPose().theta);
     claw_close();
     claw_motor.move_velocity(0);
 
