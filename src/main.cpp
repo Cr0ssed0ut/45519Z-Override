@@ -184,7 +184,7 @@ void opcontrol() {
         // L2: toggle pause/resume on the button's rising edge
         if (controller.get_digital_new_press(pros::E_CONTROLLER_DIGITAL_L2)) {
             clawPaused = !clawPaused;
-            if (clawPaused && !claw_open) {
+            if (clawPaused) {
                 claw_motor.move_velocity(0);
             } else {
                 claw_motor.move_velocity(400);
