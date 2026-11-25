@@ -118,7 +118,6 @@ bool claw_open = false;
 
 
 void opcontrol() {
-    claw_motor.move_velocity(400);
     
     // loop forever
     while (true) {
@@ -172,7 +171,7 @@ void opcontrol() {
 
         
         //spin claw outwards with Y
-        static bool clawPaused = false;
+        static bool clawPaused = true;
         
 
         if (controller.get_digital(pros::E_CONTROLLER_DIGITAL_Y)) {

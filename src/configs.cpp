@@ -32,7 +32,7 @@ lemlib::ExpoDriveCurve steer_curve(3,10,1.02);
 lemlib::Drivetrain drivetrain(&left_motor_group, // left motor group
                               &right_motor_group, // right motor group
                               10.5, // 10.5 inch track width
-                              lemlib::Omniwheel::NEW_275, // using new 4" omnis
+                              lemlib::Omniwheel::NEW_275, // using new 2.75" omnis
                               450, // drivetrain rpm is 450
                               2 // horizontal drift is 2 (for now)
 );
